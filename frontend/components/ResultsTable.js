@@ -75,6 +75,7 @@ export default function ResultsTable({ results, csvFile }) {
                       className={`
                         px-4 py-2 border dark:border-gray-700
                         ${h === "action" ? actionColor(row[h]) : ""}
+                        ${h === "rationale" ? "break-words max-w-xs" : ""}
                       `}
                     >
                       {row[h] != null ? row[h].toString() : ""}
