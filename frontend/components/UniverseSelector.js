@@ -19,21 +19,37 @@ export default function UniverseSelector({ onChange }) {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-2">Choose Universe</h3>
+      <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">
+        Choose Universe
+      </h3>
+
       <div className="grid grid-cols-3 gap-4">
-        {stockOptions.map((s) => (
-          <button
-            key={s}
-            onClick={() => toggleStock(s)}
-            className={`px-4 py-2 border rounded-lg hover:shadow-sm ${
-              selected.includes(s)
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-800 border-gray-300"
-            }`}
-          >
-            {s}
-          </button>
-        ))}
+        {stockOptions.map((s) => {
+          const isSelected = selected.includes(s);
+
+          return (
+            <button
+              key={s}
+              onClick={() => toggleStock(s)}
+              className={`
+                px-4 py-2 border rounded-lg transition hover:shadow-sm
+                ${
+                  isSelected
+                    ? `
+                      bg-blue-600 text-white border-blue-600 
+                      dark:bg-blue-500 dark:border-blue-500
+                    `
+                    : `
+                      bg-white text-gray-800 border-gray-300
+                      dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600
+                    `
+                }
+              `}
+            >
+              {s}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
