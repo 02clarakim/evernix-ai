@@ -167,7 +167,7 @@ async def generate_full_report(req: FullReportRequest):
     prompt = f"""
 =====Use Deep Research=======
 
-You are a senior equity research analyst writing a full Initiation of Coverage on {company_list_str} listed in {default_exchange}.
+You are a senior equity research analyst writing a full Initiation of Coverage on {company_name} ({symbol}) listed in {country}/{exchange}.
 
 Objective: deliver a decision ready report modeled on Goldman Sachs writing style & section outlines.
 
