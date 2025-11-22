@@ -1,8 +1,11 @@
 "use client";
+
 import { useState, Fragment } from "react";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 
 export default function ResultsTable({ results, csvFile }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const [generatingRows, setGeneratingRows] = useState(new Set());
 
   if (!results || !Array.isArray(results) || results.length === 0) return null;
 
@@ -23,7 +26,6 @@ export default function ResultsTable({ results, csvFile }) {
 
   const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-  // Action color → include dark versions
   const actionColor = (action) => {
     switch ((action || "").toUpperCase()) {
       case "BUY":
@@ -37,21 +39,44 @@ export default function ResultsTable({ results, csvFile }) {
     }
   };
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  const handleFullReport = async (symbol) => {
+    const newSet = new Set(generatingRows);
+    newSet.add(symbol);
+    setGeneratingRows(newSet);
+
+    try {
+      const res = await fetch(`${apiUrl}/generate_full_report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ universe: [symbol] }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.open(`${apiUrl}${data.url}`, "_blank");
+      }
+    } catch (err) {
+      console.error("Full report generation failed:", err);
+      alert("Failed to generate full report.");
+    } finally {
+      const newSet2 = new Set(generatingRows);
+      newSet2.delete(symbol);
+      setGeneratingRows(newSet2);
+    }
+  };
+
+  console.log("ResultsTable rows:", results);
+
   return (
     <div className="mt-10">
       <div className="overflow-x-auto">
-        <table className="
-          min-w-full border border-gray-300 dark:border-gray-700
-          text-gray-900 dark:text-gray-100
-        ">
+        <table className="min-w-full border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-800">
               <th className="px-4 py-2 border dark:border-gray-700"></th>
               {mainColumns.map((h) => (
-                <th
-                  key={h}
-                  className="px-4 py-2 border text-left dark:border-gray-700"
-                >
+                <th key={h} className="px-4 py-2 border text-left dark:border-gray-700">
                   {capitalize(h)}
                 </th>
               ))}
@@ -72,11 +97,9 @@ export default function ResultsTable({ results, csvFile }) {
                   {mainColumns.map((h) => (
                     <td
                       key={h}
-                      className={`
-                        px-4 py-2 border dark:border-gray-700
-                        ${h === "action" ? actionColor(row[h]) : ""}
-                        ${h === "rationale" ? "break-words max-w-xs" : ""}
-                      `}
+                      className={`px-4 py-2 border dark:border-gray-700 ${
+                        h === "action" ? actionColor(row[h]) : ""
+                      } ${h === "rationale" ? "break-words max-w-xs" : ""}`}
                     >
                       {row[h] != null ? row[h].toString() : ""}
                     </td>
@@ -95,6 +118,24 @@ export default function ResultsTable({ results, csvFile }) {
                           </div>
                         ))}
                       </div>
+
+                      {/* Small Link-Style Full Report Button */}
+                      <div className="flex justify-start mt-2 mb-2 pl-2">
+                        <button
+                          onClick={() => handleFullReport(row.symbol)}
+                          disabled={generatingRows.has(row.symbol)}
+                          className={`flex items-center gap-1 text-sm font-medium transition ${
+                            generatingRows.has(row.symbol)
+                              ? "text-gray-400 cursor-not-allowed"
+                              : "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                          }`}
+                        >
+                          {generatingRows.has(row.symbol) ? "Generating..." : "Generate Full Report"}
+                          {!generatingRows.has(row.symbol) && (
+                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -108,11 +149,7 @@ export default function ResultsTable({ results, csvFile }) {
         <div className="text-right mt-4">
           <button
             onClick={handleDownload}
-            className="
-              px-4 py-2 rounded 
-              bg-green-600 text-white hover:bg-green-700
-              dark:bg-green-700 dark:hover:bg-green-600
-            "
+            className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
           >
             Download CSV
           </button>
