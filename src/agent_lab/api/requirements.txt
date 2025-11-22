@@ -5,3 +5,4 @@ yfinance
 finnhub-python
 google-generativeai
 matplotlib
+markdown
