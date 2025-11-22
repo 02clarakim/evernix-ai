@@ -231,10 +231,18 @@ Begin.
 """
 
     model = genai.GenerativeModel("gemini-2.0-flash")
-    response = model.generate_content(prompt)
+    try:
+        # Call Gemini AI in a thread
+        response = await asyncio.to_thread(model.generate_content, prompt)
+        ai_text = response.text
+    except Exception as e:
+        # Log the error for debugging
+        print(f"AI generation failed: {e}")
+        ai_text = "<h1>AI generation failed. Please try again later.</h1>"
 
-    # --- Post-process immediately ---
-    html_text = markdown_to_html(response.text)
+    # --- Post-process markdown to HTML ---
+    html_text = markdown_to_html(ai_text)
+
 
     # # Optional: generate any charts (replace with real data if available)
     # chart_file = generate_price_chart(
