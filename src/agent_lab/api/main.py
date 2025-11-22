@@ -12,6 +12,7 @@ from agent_lab.agents.ackman import AckmanAgent
 from agent_lab.ensemble.oversight import OversightAgent
 from agent_lab.data_connectors.finnhub_data import fetch_finnhub_fundamentals
 from agent_lab.api.postprocess_report import markdown_to_html, generate_price_chart, wrap_html
+from fastapi.responses import HTMLResponse
 
 # --------- NEW: Gemini ----------
 import google.generativeai as genai
@@ -237,11 +238,10 @@ Begin.
     # )
 
     # Wrap HTML and save
-    today_str = date.today().isoformat()
-    html_filename = f"full_report_{today_str}.html"
-    wrap_html(html_text, out_file=html_filename)
+    html_content = wrap_html(html_text, out_file=None)  # modify wrap_html to allow None
 
-    return {"url": f"/download/{html_filename}"}
+    # Return HTML content directly
+    return HTMLResponse(content=html_content, status_code=200)
 
 # --- Endpoint: download CSV ---
 @app.get("/download/{filename}")

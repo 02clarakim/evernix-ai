@@ -52,10 +52,14 @@ export default function ResultsTable({ results, csvFile }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ universe: [symbol] }),
       });
-      const data = await res.json();
-      if (data.url) {
-        window.open(`${apiUrl}${data.url}`, "_blank");
-      }
+
+      if (!res.ok) throw new Error("Failed to generate report");
+
+      const htmlContent = await res.text();
+      const newWindow = window.open();
+      newWindow.document.open();
+      newWindow.document.write(htmlContent);
+      newWindow.document.close();
     } catch (err) {
       console.error("Full report generation failed:", err);
       alert("Failed to generate full report.");
@@ -65,8 +69,6 @@ export default function ResultsTable({ results, csvFile }) {
       setGeneratingRows(newSet2);
     }
   };
-
-  console.log("ResultsTable rows:", results);
 
   return (
     <div className="mt-10">
