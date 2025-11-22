@@ -151,28 +151,18 @@ class FullReportRequest(BaseModel):
 
 @app.post("/generate_full_report")
 async def generate_full_report(req: FullReportRequest):
-    if not req.universe:
-        return {"error": "Universe cannot be empty"}
+    if not req.universe or len(req.universe) != 1:
+        return {"error": "Universe must contain exactly one company for detailed report."}
 
-    # Fetch fundamentals to get company names and exchange info
-    fund_data_df = fetch_finnhub_fundamentals(req.universe)
-    fund_data = {sym: fund_data_df.loc[sym].to_dict() for sym in fund_data_df.index}
+    symbol = req.universe[0]
 
-    # Build a descriptive list with exchange/country
-    company_list = []
-    exchanges = []
-    for sym in req.universe:
-        row = fund_data.get(sym, {})
-        name = row.get("Company") or sym
-        exchange = row.get("exchange") or row.get("Exchange") or "USA/NASDAQ"  # fallback
-        country = row.get("country") or "USA"
-        company_list.append(f"{name}, {sym}")
-        exchanges.append(f"{country}, {exchange}")
+    # Fetch fundamentals
+    fund_data_df = fetch_finnhub_fundamentals([symbol])
+    row = fund_data_df.loc[symbol].to_dict()
 
-    # Use most common exchange in universe as default
-    default_exchange = max(set(exchanges), key=exchanges.count)
-
-    company_list_str = ", ".join(company_list)
+    company_name = row.get("Company") or symbol
+    exchange = row.get("exchange") or row.get("Exchange") or "USA/NASDAQ"
+    country = row.get("country") or "USA"
 
     prompt = f"""
 =====Use Deep Research=======
@@ -240,26 +230,19 @@ Begin.
         print(f"AI generation failed: {e}")
         ai_text = "<h1>AI generation failed. Please try again later.</h1>"
 
-    # --- Post-process markdown to HTML ---
     html_text = markdown_to_html(ai_text)
 
+    # Wrap HTML for browser with proper download button
+    html_content = wrap_html(
+        html_text,
+        company_name=company_name,
+        ticker=symbol
+    )
 
-    # # Optional: generate any charts (replace with real data if available)
-    # chart_file = generate_price_chart(
-    #     dates=["2024-12","2025-01","2025-02","2025-03"],
-    #     prices=[230, 235, 240, 245]
-    # )
-
-    # Wrap HTML and save
-    html_content = wrap_html(html_text, out_file=None)  # modify wrap_html to allow None
-
-    # Return HTML content directly
+    # Return HTML directly
     return Response(
         content=html_content,
-        media_type="text/html",
-        headers={
-            "Content-Disposition": 'attachment; filename="full_report.html"'
-        }
+        media_type="text/html"
     )
 
 # --- Endpoint: download CSV ---

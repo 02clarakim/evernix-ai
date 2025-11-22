@@ -31,14 +31,12 @@ def generate_price_chart(dates, prices, chart_file="price_chart.png"):
 # ----------------------
 from datetime import date
 
-def wrap_html(content_html, charts=None, company_name="Report", ticker="TICKER", out_file=None):
+def wrap_html(content_html, charts=None, company_name="Report", ticker="TICKER"):
     """
     Wrap HTML content in a full page with CSS and optional charts.
-    Compatible with main.py call: wrap_html(html_text, out_file=None)
+    Download button triggers OS 'Save As...' popup.
     """
-
     charts = charts or []
-    today_str = date.today().isoformat()
 
     # Build chart HTML blocks
     chart_html = "".join([
@@ -46,7 +44,6 @@ def wrap_html(content_html, charts=None, company_name="Report", ticker="TICKER",
         for c in charts
     ])
 
-    # HTML wrapper
     html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -83,6 +80,7 @@ body {{
     border-radius: 6px;
     color: #333;
     transition: background 0.2s ease;
+    cursor: pointer;
 }}
 
 .download-btn:hover {{
@@ -123,14 +121,10 @@ tbody tr:nth-child(even) {{
 <div class="header-container">
     <div class="report-title">{company_name} ({ticker})</div>
 
-    <!-- Download endpoint triggers browser Save-As dialog -->
-    <a href="/download/{ticker}.csv" class="download-btn" title="Download report">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-    </a>
+    <!-- Download button triggers OS 'Save As' -->
+    <div class="download-btn" onclick="downloadReport()">
+        Download report
+    </div>
 </div>
 
 <div class="content">
@@ -139,13 +133,19 @@ tbody tr:nth-child(even) {{
 
 {chart_html}
 
+<script>
+function downloadReport() {{
+    const blob = new Blob([document.documentElement.outerHTML], {{ type: 'text/html' }});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '{company_name}_report.html';  // default filename
+    a.click();
+    URL.revokeObjectURL(url);
+}}
+</script>
+
 </body>
 </html>
 """
-
-    # Optional: save to file if out_file is provided
-    if out_file:
-        with open(out_file, "w", encoding="utf-8") as f:
-            f.write(html_content)
-
     return html_content
