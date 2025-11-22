@@ -4,3 +4,4 @@ pandas
 yfinance
 finnhub-python
 google-generativeai
+matplotlib
