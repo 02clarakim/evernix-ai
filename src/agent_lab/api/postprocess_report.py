@@ -30,12 +30,13 @@ def generate_price_chart(dates, prices, chart_file="price_chart.png"):
 # Wrap HTML content in full page
 # ----------------------
 def wrap_html(content, charts=None, out_file=None):
-    charts = charts or []  # default to empty list if None
-    chart_html = "".join([f'<div class="chart"><img src="{c}" style="width:800px;height:auto"></div>' for c in charts])
+    charts = charts or []
+    chart_html = "".join([
+        f'<div class="chart"><img src="{c}" style="width:800px;height:auto"></div>'
+        for c in charts
+    ])
 
     today_str = date.today().isoformat()
-    if out_file is None:
-        out_file = f"full_report_{today_str}.html"
 
     html_content = f"""
 <!DOCTYPE html>
@@ -74,15 +75,52 @@ tbody tr:nth-child(even) {{
     margin: 20px 0;
     text-align: center;
 }}
+
+#download-btn {{
+  display:inline-block;
+  padding:6px 10px;
+  background:#0b5fff;
+  color:white;
+  border-radius:6px;
+  text-decoration:none;
+  font-size:13px;
+  margin-bottom:20px;
+}}
 </style>
 </head>
 <body>
+
+<a id="download-btn" href="#" onclick="downloadHtml()">Download HTML</a>
+
 {content}
 {chart_html}
+
+<script>
+function downloadHtml() {{
+    const html = document.documentElement.outerHTML;
+    const blob = new Blob([html], {{ type: "text/html" }});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "full_report_{today_str}.html";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}}
+</script>
+
 </body>
 </html>
 """
+
+    # --- NEW LOGIC ---
+    # If out_file is None, return HTML string directly (do NOT write file)
+    if out_file is None:
+        return html_content
+
+    # Otherwise, save the file AND return the filename
     with open(out_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    print(f"HTML report saved as {out_file}")
+
     return out_file
