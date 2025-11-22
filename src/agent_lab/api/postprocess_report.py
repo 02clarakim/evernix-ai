@@ -31,13 +31,10 @@ def generate_price_chart(dates, prices, chart_file="price_chart.png"):
 # ----------------------
 from datetime import date
 
-def wrap_html(content_html, charts=None, company_name="Report", ticker="TICKER"):
+def wrap_html(content_html, charts=None, company_name="Report", ticker="TICKER", out_file=None):
     """
-    Full HTML wrapper including:
-    - Title + download icon (same line)
-    - Chart embedding
-    - Full table + typography styling
-    - Save-as triggered by backend (via Content-Disposition header)
+    Wrap HTML content in a full page with CSS and optional charts.
+    Compatible with main.py call: wrap_html(html_text, out_file=None)
     """
 
     charts = charts or []
@@ -49,7 +46,7 @@ def wrap_html(content_html, charts=None, company_name="Report", ticker="TICKER")
         for c in charts
     ])
 
-    # Modern HTML wrapper
+    # HTML wrapper
     html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -58,109 +55,97 @@ def wrap_html(content_html, charts=None, company_name="Report", ticker="TICKER")
 <title>{company_name} ({ticker}) — Full Report</title>
 
 <style>
-    body {{
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-                     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        line-height: 1.6;
-        margin: 40px auto;
-        max-width: 900px;
-        color: #222;
-    }}
+body {{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+                 Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    margin: 40px auto;
+    max-width: 900px;
+    color: #222;
+}}
 
-    /* --- Header row --- */
-    .header-container {{
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-    }}
+.header-container {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}}
 
-    .report-title {{
-        font-size: 30px;
-        font-weight: 700;
-        margin: 0;
-    }}
+.report-title {{
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0;
+}}
 
-    .download-btn {{
-        text-decoration: none;
-        padding: 6px;
-        border-radius: 6px;
-        color: #333;
-        transition: background 0.2s ease;
-    }}
+.download-btn {{
+    text-decoration: none;
+    padding: 6px;
+    border-radius: 6px;
+    color: #333;
+    transition: background 0.2s ease;
+}}
 
-    .download-btn:hover {{
-        background-color: #f0f0f0;
-    }}
+.download-btn:hover {{
+    background-color: #f0f0f0;
+}}
 
-    /* --- Tables --- */
-    table {{
-        border-collapse: collapse;
-        width: 100%;
-        margin: 25px 0;
-        font-size: 14px;
-    }}
+table {{
+    border-collapse: collapse;
+    width: 100%;
+    margin: 25px 0;
+    font-size: 14px;
+}}
 
-    table, th, td {{
-        border: 1px solid #aaa;
-        padding: 8px;
-        text-align: left;
-    }}
+table, th, td {{
+    border: 1px solid #aaa;
+    padding: 8px;
+    text-align: left;
+}}
 
-    th {{
-        background-color: #003366;
-        color: white;
-    }}
+th {{
+    background-color: #003366;
+    color: white;
+}}
 
-    tbody tr:nth-child(even) {{
-        background-color: #f7f7f7;
-    }}
+tbody tr:nth-child(even) {{
+    background-color: #f7f7f7;
+}}
 
-    /* --- Charts --- */
-    .chart {{
-        margin: 25px 0;
-        text-align: center;
-    }}
+.chart {{
+    margin: 25px 0;
+    text-align: center;
+}}
 </style>
 </head>
 
 <body>
 
-    <div class="header-container">
-        <div class="report-title">{company_name} ({ticker})</div>
+<div class="header-container">
+    <div class="report-title">{company_name} ({ticker})</div>
 
-        <!-- Download endpoint triggers browser Save-As dialog -->
-        <a 
-            href="/api/report/download/{ticker}" 
-            class="download-btn" 
-            title="Download report"
-        >
-            <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="22" 
-                height="22" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                stroke-width="2" 
-                stroke-linecap="round" 
-                stroke-linejoin="round"
-                style="vertical-align: middle;"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-        </a>
-    </div>
+    <!-- Download endpoint triggers browser Save-As dialog -->
+    <a href="/download/{ticker}.csv" class="download-btn" title="Download report">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+    </a>
+</div>
 
-    <div class="content">
-        {content_html}
-    </div>
+<div class="content">
+    {content_html}
+</div>
 
-    {chart_html}
+{chart_html}
 
 </body>
 </html>
 """
+
+    # Optional: save to file if out_file is provided
+    if out_file:
+        with open(out_file, "w", encoding="utf-8") as f:
+            f.write(html_content)
+
     return html_content
