@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from datetime import date
 import pandas as pd
 import asyncio
+import os
 
 from agent_lab.agents.buffett import BuffettAgent
 from agent_lab.agents.ackman import AckmanAgent
@@ -16,7 +17,11 @@ from fastapi.responses import HTMLResponse
 
 # --------- NEW: Gemini ----------
 import google.generativeai as genai
-genai.configure(api_key="AIzaSyCY6kZTL8TZm-0MR5JswtYuEHG_VxidBBg")
+
+genai_api_key = os.getenv("GOOGLE_API_KEY")
+if not genai_api_key:
+    raise ValueError("Missing GOOGLE_API_KEY environment variable")
+genai.configure(api_key=genai_api_key)
 
 async def generate_gemini_rationale(metrics, action):
     prompt = f"""
