@@ -29,98 +29,138 @@ def generate_price_chart(dates, prices, chart_file="price_chart.png"):
 # ----------------------
 # Wrap HTML content in full page
 # ----------------------
-def wrap_html(content, charts=None, out_file=None):
+from datetime import date
+
+def wrap_html(content_html, charts=None, company_name="Report", ticker="TICKER"):
+    """
+    Full HTML wrapper including:
+    - Title + download icon (same line)
+    - Chart embedding
+    - Full table + typography styling
+    - Save-as triggered by backend (via Content-Disposition header)
+    """
+
     charts = charts or []
+    today_str = date.today().isoformat()
+
+    # Build chart HTML blocks
     chart_html = "".join([
-        f'<div class="chart"><img src="{c}" style="width:800px;height:auto"></div>'
+        f'<div class="chart"><img src="cid:{c}" style="width:800px;height:auto"></div>'
         for c in charts
     ])
 
-    today_str = date.today().isoformat()
-
+    # Modern HTML wrapper
     html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Full Report - {today_str}</title>
-<style>
-body {{
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    margin: 20px;
-    max-width: 1000px;
-}}
-h1, h2, h3 {{ color: #003366; }}
-ul, ol {{ margin-left: 20px; }}
-table {{
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 14px;
-    width: 100%;
-}}
-table, th, td {{
-    border: 1px solid #999;
-    padding: 8px;
-    text-align: left;
-}}
-th {{
-    background-color: #003366;
-    color: #fff;
-}}
-tbody tr:nth-child(even) {{
-    background-color: #f3f3f3;
-}}
-.chart {{
-    margin: 20px 0;
-    text-align: center;
-}}
+<title>{company_name} ({ticker}) — Full Report</title>
 
-#download-btn {{
-  display:inline-block;
-  padding:6px 10px;
-  background:#0b5fff;
-  color:white;
-  border-radius:6px;
-  text-decoration:none;
-  font-size:13px;
-  margin-bottom:20px;
-}}
+<style>
+    body {{
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+                     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        line-height: 1.6;
+        margin: 40px auto;
+        max-width: 900px;
+        color: #222;
+    }}
+
+    /* --- Header row --- */
+    .header-container {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }}
+
+    .report-title {{
+        font-size: 30px;
+        font-weight: 700;
+        margin: 0;
+    }}
+
+    .download-btn {{
+        text-decoration: none;
+        padding: 6px;
+        border-radius: 6px;
+        color: #333;
+        transition: background 0.2s ease;
+    }}
+
+    .download-btn:hover {{
+        background-color: #f0f0f0;
+    }}
+
+    /* --- Tables --- */
+    table {{
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        font-size: 14px;
+    }}
+
+    table, th, td {{
+        border: 1px solid #aaa;
+        padding: 8px;
+        text-align: left;
+    }}
+
+    th {{
+        background-color: #003366;
+        color: white;
+    }}
+
+    tbody tr:nth-child(even) {{
+        background-color: #f7f7f7;
+    }}
+
+    /* --- Charts --- */
+    .chart {{
+        margin: 25px 0;
+        text-align: center;
+    }}
 </style>
 </head>
+
 <body>
 
-<a id="download-btn" href="#" onclick="downloadHtml()">Download HTML</a>
+    <div class="header-container">
+        <div class="report-title">{company_name} ({ticker})</div>
 
-{content}
-{chart_html}
+        <!-- Download endpoint triggers browser Save-As dialog -->
+        <a 
+            href="/api/report/download/{ticker}" 
+            class="download-btn" 
+            title="Download report"
+        >
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="22" 
+                height="22" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="2" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"
+                style="vertical-align: middle;"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+        </a>
+    </div>
 
-<script>
-function downloadHtml() {{
-    const html = document.documentElement.outerHTML;
-    const blob = new Blob([html], {{ type: "text/html" }});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "full_report_{today_str}.html";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-}}
-</script>
+    <div class="content">
+        {content_html}
+    </div>
+
+    {chart_html}
 
 </body>
 </html>
 """
-
-    # --- NEW LOGIC ---
-    # If out_file is None, return HTML string directly (do NOT write file)
-    if out_file is None:
-        return html_content
-
-    # Otherwise, save the file AND return the filename
-    with open(out_file, "w", encoding="utf-8") as f:
-        f.write(html_content)
-
-    return out_file
+    return html_content

@@ -13,7 +13,7 @@ from agent_lab.agents.ackman import AckmanAgent
 from agent_lab.ensemble.oversight import OversightAgent
 from agent_lab.data_connectors.finnhub_data import fetch_finnhub_fundamentals
 from agent_lab.api.postprocess_report import markdown_to_html, generate_price_chart, wrap_html
-from fastapi.responses import HTMLResponse
+from fastapi.responses import Response
 
 # --------- NEW: Gemini ----------
 import google.generativeai as genai
@@ -183,7 +183,7 @@ Objective: deliver a decision ready report modeled on Goldman Sachs writing styl
 
 === IMPORTANT ===
 • Start the report immediately. Do NOT include introductory phrases like "Okay, let's..." or "Here is...".
-• Begin directly with the title of the current company and start with: **Key Data & Forecast Snapshot**.
+• Begin directly with: **Key Data & Forecast Snapshot**.
 • Follow the output specs and section order exactly.
 
 === OUTPUT SPECS ===
@@ -246,7 +246,13 @@ Begin.
     html_content = wrap_html(html_text, out_file=None)  # modify wrap_html to allow None
 
     # Return HTML content directly
-    return HTMLResponse(content=html_content, status_code=200)
+    return Response(
+        content=html_content,
+        media_type="text/html",
+        headers={
+            "Content-Disposition": 'attachment; filename="full_report.html"'
+        }
+    )
 
 # --- Endpoint: download CSV ---
 @app.get("/download/{filename}")

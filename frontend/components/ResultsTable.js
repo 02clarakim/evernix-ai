@@ -55,11 +55,11 @@ export default function ResultsTable({ results, csvFile }) {
 
       if (!res.ok) throw new Error("Failed to generate report");
 
-      const htmlContent = await res.text();
-      const newWindow = window.open();
-      newWindow.document.open();
-      newWindow.document.write(htmlContent);
-      newWindow.document.close();
+      // Open new window and inject the styled HTML (which now includes the download icon)
+      const html = await res.text();
+      const win = window.open("", "_blank");
+      win.document.write(html);
+      win.document.close();
     } catch (err) {
       console.error("Full report generation failed:", err);
       alert("Failed to generate full report.");
